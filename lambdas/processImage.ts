@@ -2,13 +2,15 @@
 import { SQSHandler } from "aws-lambda";
 import {
   GetObjectCommand,
-  PutObjectCommandInput,
   GetObjectCommandInput,
-  S3Client,
-  PutObjectCommand,
+  S3Client
 } from "@aws-sdk/client-s3";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { PartitionKey } from "aws-cdk-lib/aws-appsync";
 
 const s3 = new S3Client();
+const dynamodbclient = new DynamoDBClient({region: process.env.REGION})
 
 export const handler: SQSHandler = async (event) => {
   console.log("Event ", JSON.stringify(event));
@@ -30,10 +32,26 @@ export const handler: SQSHandler = async (event) => {
             Bucket: srcBucket,
             Key: srcKey,
           };
+
+          if (!params.Key?.includes(".jpeg") && !params.Key?.includes(".png")) {
+            console.log("Error, wrong file type.")
+            throw new Error("Wrong file type.");
+          }
           origimage = await s3.send(new GetObjectCommand(params));
-          // Process the image ......
+
+          const commandOutput = await dynamodbclient.send(
+            new PutCommand({
+              TableName: process.env.TABLE_NAME,
+              Item: {
+                id: srcKey,
+                bucketName: srcBucket,
+              }
+            })
+          )
+          console.log("Added image to images table: ", JSON.stringify(commandOutput))
         } catch (error) {
           console.log(error);
+          throw new Error(JSON.stringify(error));
         }
       }
     }
