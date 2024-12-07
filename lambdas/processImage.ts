@@ -7,7 +7,6 @@ import {
 } from "@aws-sdk/client-s3";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { PartitionKey } from "aws-cdk-lib/aws-appsync";
 
 const s3 = new S3Client();
 const dynamodbclient = new DynamoDBClient({region: process.env.REGION})
@@ -44,7 +43,7 @@ export const handler: SQSHandler = async (event) => {
               TableName: process.env.TABLE_NAME,
               Item: {
                 id: srcKey,
-                bucketName: srcBucket,
+                bucketName: srcBucket
               }
             })
           )

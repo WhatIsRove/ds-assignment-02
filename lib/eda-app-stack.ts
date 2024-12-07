@@ -69,7 +69,7 @@ export class EDAAppStack extends cdk.Stack {
       "UpdateImageFn",
       {
         runtime: lambda.Runtime.NODEJS_18_X,
-        entry: `${__dirname}/../lambdas/processImage.ts`,
+        entry: `${__dirname}/../lambdas/updateImage.ts`,
         timeout: cdk.Duration.seconds(15),
         memorySize: 128,
         environment: {
@@ -103,13 +103,7 @@ export class EDAAppStack extends cdk.Stack {
 
 
     newImageTopic.addSubscription(
-      new subs.SqsSubscription(imageProcessQueue, {
-        filterPolicy: {
-          metadata_type: sns.SubscriptionFilter.stringFilter({
-            denylist: ["Caption", "Date", "Photographer"]
-          })
-        }
-      })
+      new subs.SqsSubscription(imageProcessQueue)
     );
 
     newImageTopic.addSubscription(
@@ -180,6 +174,10 @@ export class EDAAppStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, "bucketName", {
       value: imagesBucket.bucketName,
+    });
+
+    new cdk.CfnOutput(this, "topicARN", {
+      value: newImageTopic.topicArn,
     });
   }
 }
